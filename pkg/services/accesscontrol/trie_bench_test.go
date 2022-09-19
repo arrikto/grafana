@@ -7,7 +7,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func setupTestEnv2(b *testing.B, resourceCount, permissionPerResource int) (map[string][]string, map[string]bool) {
+func generatePermissions(b *testing.B, resourceCount, permissionPerResource int) (map[string][]string, map[string]bool) {
 	res := map[string][]string{}
 	ids := make(map[string]bool, resourceCount)
 
@@ -24,11 +24,11 @@ func setupTestEnv2(b *testing.B, resourceCount, permissionPerResource int) (map[
 }
 
 func benchGetTrieMetadata(b *testing.B, resourceCount, permissionPerResource int) {
-	permissions, ids := setupTestEnv2(b, resourceCount, permissionPerResource)
+	permissions, ids := generatePermissions(b, resourceCount, permissionPerResource)
 	trie := TrieFromMap(permissions)
+	metas := make(map[string]Metadata)
 	b.ResetTimer()
 
-	var metas map[string]Metadata
 	for n := 0; n < b.N; n++ {
 		for id := range ids {
 			metas[id] = trie.Metadata(id)
@@ -41,23 +41,23 @@ func benchGetTrieMetadata(b *testing.B, resourceCount, permissionPerResource int
 }
 
 // Lots of permissions
-func BenchmarkTrieMetadata_10_1000(b *testing.B)   { benchGetMetadata(b, 10, 1000) }   // ~0.0022s/op
-func BenchmarkTrieMetadata_10_10000(b *testing.B)  { benchGetMetadata(b, 10, 10000) }  // ~0.019s/op
-func BenchmarkTrieMetadata_10_100000(b *testing.B) { benchGetMetadata(b, 10, 100000) } // ~0.25s/op
+func BenchmarkTrieMetadata_10_1000(b *testing.B)   { benchGetTrieMetadata(b, 10, 1000) }
+func BenchmarkTrieMetadata_10_10000(b *testing.B)  { benchGetTrieMetadata(b, 10, 10000) }
+func BenchmarkTrieMetadata_10_100000(b *testing.B) { benchGetTrieMetadata(b, 10, 100000) }
 func BenchmarkTrieMetadata_10_1000000(b *testing.B) {
 	if testing.Short() {
 		b.Skip("Skipping benchmark in short mode")
 	}
-	benchGetMetadata(b, 10, 1000000)
-} // ~5.8s/op
+	benchGetTrieMetadata(b, 10, 1000000)
+}
 
 // Lots of resources
-func BenchmarkTrieMetadata_1000_10(b *testing.B)   { benchGetMetadata(b, 1000, 10) }   // ~0,0023s/op
-func BenchmarkTrieMetadata_10000_10(b *testing.B)  { benchGetMetadata(b, 10000, 10) }  // ~0.022s/op
-func BenchmarkTrieMetadata_100000_10(b *testing.B) { benchGetMetadata(b, 100000, 10) } // ~0.26s/op
+func BenchmarkTrieMetadata_1000_10(b *testing.B)   { benchGetTrieMetadata(b, 1000, 10) }
+func BenchmarkTrieMetadata_10000_10(b *testing.B)  { benchGetTrieMetadata(b, 10000, 10) }
+func BenchmarkTrieMetadata_100000_10(b *testing.B) { benchGetTrieMetadata(b, 100000, 10) }
 func BenchmarkTrieMetadata_1000000_10(b *testing.B) {
 	if testing.Short() {
 		b.Skip("Skipping benchmark in short mode")
 	}
-	benchGetMetadata(b, 1000000, 10)
-} // ~4.1s/op
+	benchGetTrieMetadata(b, 1000000, 10)
+}
