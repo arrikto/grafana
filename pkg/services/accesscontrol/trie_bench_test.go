@@ -7,25 +7,25 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func generatePermissions(b *testing.B, resourceCount, permissionPerResource int) (map[string][]string, map[string]bool) {
-	res := map[string][]string{}
+func generatePermissions(b *testing.B, resourceCount, permissionPerResource int) ([]Permission, map[string]bool) {
+	var permissions []Permission
 	ids := make(map[string]bool, resourceCount)
 
 	for p := 0; p < permissionPerResource; p++ {
 		action := fmt.Sprintf("resources:action%v", p)
 		for r := 0; r < resourceCount; r++ {
 			scope := fmt.Sprintf("resources:id:%v", r)
-			res[action] = append(res[action], scope)
+			permissions = append(permissions, Permission{Action: action, Scope: scope})
 			ids[scope] = true
 		}
 	}
 
-	return res, ids
+	return permissions, ids
 }
 
 func benchGetTrieMetadata(b *testing.B, resourceCount, permissionPerResource int) {
 	permissions, ids := generatePermissions(b, resourceCount, permissionPerResource)
-	trie := TrieFromMap(permissions)
+	trie := TrieFromPermissions(permissions)
 	metas := make(map[string]Metadata)
 	b.ResetTimer()
 
@@ -61,3 +61,27 @@ func BenchmarkTrieMetadata_1000000_10(b *testing.B) {
 	}
 	benchGetTrieMetadata(b, 1000000, 10)
 }
+
+func benchBuildTrie(b *testing.B, resourceCount, permissionPerResource int) {
+	permissions, _ := generatePermissions(b, resourceCount, permissionPerResource)
+	b.ResetTimer()
+	for n := 0; n < b.N; n++ {
+		_ = TrieFromPermissions(permissions)
+	}
+}
+
+func BenchmarkBuildTrie_10_1000(b *testing.B)   { benchBuildTrie(b, 10, 1000) }
+func BenchmarkBuildTrie_10_10000(b *testing.B)  { benchBuildTrie(b, 10, 10000) }
+func BenchmarkBuildTrie_10_100000(b *testing.B) { benchBuildTrie(b, 10, 100000) }
+
+func benchBuildMap(b *testing.B, resourceCount, permissionPerResource int) {
+	permissions, _ := generatePermissions(b, resourceCount, permissionPerResource)
+	b.ResetTimer()
+	for n := 0; n < b.N; n++ {
+		_ = GroupScopesByAction(permissions)
+	}
+}
+
+func BenchmarkBuildMap_10_1000(b *testing.B)   { benchBuildMap(b, 10, 1000) }
+func BenchmarkBuildMap_10_10000(b *testing.B)  { benchBuildMap(b, 10, 10000) }
+func BenchmarkBuildMap_10_100000(b *testing.B) { benchBuildMap(b, 10, 100000) }
