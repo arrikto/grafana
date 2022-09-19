@@ -2,11 +2,16 @@ package accesscontrol
 
 import "strings"
 
+const (
+	pathDelim  = "/"
+	scopeDelim = ":"
+)
+
 func TrieFromPermissions(permissions []Permission) *Trie {
 	t := newTrie()
 	for _, p := range permissions {
 		t.Actions[p.Action] = true
-		t.Root.addNode(p.Action, p.Scope)
+		t.Root.addNode(p.Action, p.Scope, ":")
 	}
 	return t
 }
@@ -16,7 +21,7 @@ func TrieFromMap(permissions map[string][]string) *Trie {
 	for action, scopes := range permissions {
 		t.Actions[action] = true
 		for _, scope := range scopes {
-			t.Root.addNode(action, scope)
+			t.Root.addNode(action, scope, ":")
 		}
 	}
 	return t
@@ -72,7 +77,7 @@ type Node struct {
 	Children map[string]Node `json:"children"`
 }
 
-func (n *Node) addNode(action, path string) {
+func (n *Node) addNode(action, path, delim string) {
 	if path == "" {
 		return
 	}
@@ -88,7 +93,7 @@ func (n *Node) addNode(action, path string) {
 	}
 
 	prefix := path
-	idx := strings.Index(prefix, ":")
+	idx := strings.Index(prefix, delim)
 	if idx > 0 {
 		prefix = path[:idx]
 	}
@@ -103,7 +108,7 @@ func (n *Node) addNode(action, path string) {
 		c = n.Children[prefix]
 	}
 
-	c.addNode(action, path[idx+1:])
+	c.addNode(action, path[idx+1:], delim)
 }
 
 func (n *Node) walk(path string, walkFn func(n *Node) bool) {

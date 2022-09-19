@@ -13,9 +13,9 @@ var logger = log.New("accesscontrol.evaluator")
 type Evaluator interface {
 	// Evaluate permissions that are grouped by action
 	Evaluate(permissions map[string][]string) bool
+	Evaluate2(permissions *Trie) bool
 	// MutateScopes executes a sequence of ScopeModifier functions on all embedded scopes of an evaluator and returns a new Evaluator
 	MutateScopes(ctx context.Context, mutate ScopeAttributeMutator) (Evaluator, error)
-	// String returns a string representation of permission required by the evaluator
 	fmt.Stringer
 	fmt.GoStringer
 }
@@ -30,6 +30,19 @@ func EvalPermission(action string, scopes ...string) Evaluator {
 type permissionEvaluator struct {
 	Action string
 	Scopes []string
+}
+
+func (p permissionEvaluator) Evaluate2(permissions *Trie) bool {
+	if len(p.Scopes) == 0 {
+		return permissions.HasAccess(p.Action, "")
+	}
+
+	for _, scope := range p.Scopes {
+		if permissions.HasAccess(p.Action, scope) {
+			return true
+		}
+	}
+	return false
 }
 
 func (p permissionEvaluator) Evaluate(permissions map[string][]string) bool {
@@ -114,6 +127,15 @@ type allEvaluator struct {
 	allOf []Evaluator
 }
 
+func (a allEvaluator) Evaluate2(permissions *Trie) bool {
+	for _, e := range a.allOf {
+		if !e.Evaluate2(permissions) {
+			return false
+		}
+	}
+	return true
+}
+
 func (a allEvaluator) Evaluate(permissions map[string][]string) bool {
 	for _, e := range a.allOf {
 		if !e.Evaluate(permissions) {
@@ -162,6 +184,15 @@ func EvalAny(anyOf ...Evaluator) Evaluator {
 
 type anyEvaluator struct {
 	anyOf []Evaluator
+}
+
+func (a anyEvaluator) Evaluate2(permissions *Trie) bool {
+	for _, e := range a.anyOf {
+		if e.Evaluate2(permissions) {
+			return true
+		}
+	}
+	return false
 }
 
 func (a anyEvaluator) Evaluate(permissions map[string][]string) bool {
