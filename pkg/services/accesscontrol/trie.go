@@ -1,6 +1,8 @@
 package accesscontrol
 
-import "strings"
+import (
+	"strings"
+)
 
 const (
 	pathDelim  = "/"
@@ -49,7 +51,7 @@ func (t *Trie) HasAccess(action, scope string) bool {
 		return t.Actions[action]
 	}
 	var hasAccess bool
-	t.Root.walk(scope, func(n *Node) bool {
+	t.Root.walkPath(scope, func(n *Node) bool {
 		if n.Actions[action] {
 			hasAccess = true
 			return true
@@ -59,9 +61,31 @@ func (t *Trie) HasAccess(action, scope string) bool {
 	return hasAccess
 }
 
+func (t *Trie) Identifiers(action, prefix string) (bool, []string) {
+	var hasWildcard bool
+	t.Root.walkPath(prefix, func(n *Node) bool {
+		if n.Actions[action] {
+			hasWildcard = true
+			return true
+		}
+		return false
+	})
+
+	if hasWildcard {
+		return true, nil
+	}
+
+	var identifiers []string
+	t.Root.walkPrefix(prefix, func(n *Node) bool {
+		identifiers = append(identifiers, n.Path)
+		return false
+	})
+	return false, identifiers
+}
+
 func (t *Trie) Metadata(scope string) Metadata {
-	metadata := make(Metadata, 0)
-	t.Root.walk(scope, func(n *Node) bool {
+	metadata := Metadata{}
+	t.Root.walkPath(scope, func(n *Node) bool {
 		for action := range n.Actions {
 			metadata[action] = true
 		}
@@ -111,7 +135,7 @@ func (n *Node) addNode(action, path, delim string) {
 	c.addNode(action, path[idx+1:], delim)
 }
 
-func (n *Node) walk(path string, walkFn func(n *Node) bool) {
+func (n *Node) walkPath(path string, walkFn func(n *Node) bool) {
 	stop := walkFn(n)
 	if stop {
 		return
@@ -128,6 +152,25 @@ func (n *Node) walk(path string, walkFn func(n *Node) bool) {
 	}
 
 	if c, ok := n.Children[prefix]; ok {
-		c.walk(path[idx+1:], walkFn)
+		c.walkPath(path[idx+1:], walkFn)
+	}
+}
+
+// walkPrefix walks every node under prefix
+func (n *Node) walkPrefix(prefix string, walkFn func(n *Node) bool) {
+	path := prefix
+	idx := strings.Index(path, ":")
+	if idx > 0 {
+		path = prefix[:idx]
+	}
+
+	if c, ok := n.Children[path]; ok {
+		c.walkPrefix(prefix[idx+1:], walkFn)
+	}
+
+	if path == "" {
+		for _, c := range n.Children {
+			walkFn(&c)
+		}
 	}
 }

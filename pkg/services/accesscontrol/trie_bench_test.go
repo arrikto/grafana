@@ -70,9 +70,14 @@ func benchBuildTrie(b *testing.B, resourceCount, permissionPerResource int) {
 	}
 }
 
-func BenchmarkBuildTrie_10_1000(b *testing.B)   { benchBuildTrie(b, 10, 1000) }
-func BenchmarkBuildTrie_10_10000(b *testing.B)  { benchBuildTrie(b, 10, 10000) }
-func BenchmarkBuildTrie_10_100000(b *testing.B) { benchBuildTrie(b, 10, 100000) }
+//func BenchmarkBuildTrie_10_1000(b *testing.B)   { benchBuildTrie(b, 10, 1000) }
+//func BenchmarkBuildTrie_10_10000(b *testing.B)  { benchBuildTrie(b, 10, 10000) }
+//func BenchmarkBuildTrie_10_100000(b *testing.B) { benchBuildTrie(b, 10, 100000) }
+
+func BenchmarkBuildTrie_100_100(b *testing.B) { benchBuildTrie(b, 100, 100) }
+
+//func BenchmarkBuildTrie_1000_1000(b *testing.B)  { benchBuildTrie(b, 1000, 1000) }
+//func BenchmarkBuildTrie_10000_1000(b *testing.B) { benchBuildTrie(b, 10000, 1000) }
 
 func benchBuildMap(b *testing.B, resourceCount, permissionPerResource int) {
 	permissions, _ := generatePermissions(b, resourceCount, permissionPerResource)
@@ -82,6 +87,10 @@ func benchBuildMap(b *testing.B, resourceCount, permissionPerResource int) {
 	}
 }
 
-func BenchmarkBuildMap_10_1000(b *testing.B)   { benchBuildMap(b, 10, 1000) }
-func BenchmarkBuildMap_10_10000(b *testing.B)  { benchBuildMap(b, 10, 10000) }
-func BenchmarkBuildMap_10_100000(b *testing.B) { benchBuildMap(b, 10, 100000) }
+func BenchmarkBuildMap_100_100(b *testing.B) { benchBuildMap(b, 100, 100) }
+
+//func BenchmarkBuildMap_10_10000(b *testing.B)   { benchBuildMap(b, 10, 10000) }
+//func BenchmarkBuildMap_10_100000(b *testing.B)  { benchBuildMap(b, 10, 100000) }
+//func BenchmarkBuildMap_100_1000(b *testing.B)   { benchBuildMap(b, 100, 1000) }
+//func BenchmarkBuildMap_1000_1000(b *testing.B)  { benchBuildMap(b, 1000, 1000) }
+//func BenchmarkBuildMap_10000_1000(b *testing.B) { benchBuildMap(b, 10000, 1000) }

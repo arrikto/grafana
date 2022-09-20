@@ -26,16 +26,17 @@ func TestTree(t *testing.T) {
 
 func TestTree2(t *testing.T) {
 	permissions := []Permission{
-		{Action: "datasources:read", Scope: "datasources:*"},
+		{Action: "datasources:read", Scope: "datasources:uid:222"},
 		{Action: "datasources:read", Scope: "datasources:uid:123"},
 		{Action: "datasources:write", Scope: "datasources:uid:123"},
-		{Action: "datasources:write", Scope: "*"},
 	}
 
 	tree := TrieFromPermissions(permissions)
 	data, err := json.MarshalIndent(tree, "", " ")
 	require.NoError(t, err)
 	fmt.Println(string(data))
+
+	fmt.Println(tree.Identifiers("datasources:write", "datasources:uid:"))
 }
 
 func TestTrie_HasAccess(t *testing.T) {
