@@ -13,7 +13,7 @@ func TrieFromPermissions(permissions []Permission) *Trie {
 	t := newTrie()
 	for _, p := range permissions {
 		t.Actions[p.Action] = true
-		t.Root.addNode(p.Action, p.Scope, ":")
+		t.Root.addNode(p.Action, p.Scope, scopeDelim)
 	}
 	return t
 }
@@ -124,12 +124,12 @@ func (n *Node) addNode(action, path, delim string) {
 
 	c, ok := n.Children[prefix]
 	if !ok {
-		n.Children[prefix] = Node{
+		c = Node{
 			Path:     prefix,
 			Actions:  map[string]bool{},
 			Children: map[string]Node{},
 		}
-		c = n.Children[prefix]
+		n.Children[prefix] = c
 	}
 
 	c.addNode(action, path[idx+1:], delim)
