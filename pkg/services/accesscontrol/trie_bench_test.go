@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func generatePermissions(b *testing.B, resourceCount, permissionPerResource int) ([]Permission, map[string]bool) {
@@ -40,7 +41,6 @@ func benchGetTrieMetadata(b *testing.B, resourceCount, permissionPerResource int
 	}
 }
 
-// Lots of permissions
 func BenchmarkTrieMetadata_10_1000(b *testing.B)   { benchGetTrieMetadata(b, 10, 1000) }
 func BenchmarkTrieMetadata_10_10000(b *testing.B)  { benchGetTrieMetadata(b, 10, 10000) }
 func BenchmarkTrieMetadata_10_100000(b *testing.B) { benchGetTrieMetadata(b, 10, 100000) }
@@ -51,7 +51,6 @@ func BenchmarkTrieMetadata_10_1000000(b *testing.B) {
 	benchGetTrieMetadata(b, 10, 1000000)
 }
 
-// Lots of resources
 func BenchmarkTrieMetadata_1000_10(b *testing.B)   { benchGetTrieMetadata(b, 1000, 10) }
 func BenchmarkTrieMetadata_10000_10(b *testing.B)  { benchGetTrieMetadata(b, 10000, 10) }
 func BenchmarkTrieMetadata_100000_10(b *testing.B) { benchGetTrieMetadata(b, 100000, 10) }
@@ -61,6 +60,20 @@ func BenchmarkTrieMetadata_1000000_10(b *testing.B) {
 	}
 	benchGetTrieMetadata(b, 1000000, 10)
 }
+
+func benchTrieHasAccess(b *testing.B, resourceCount, permissionsPerResource int) {
+	permissions, _ := generatePermissions(b, resourceCount, permissionsPerResource)
+	t := TrieFromPermissions(permissions)
+	b.ResetTimer()
+
+	for n := 0; n < b.N; n++ {
+		for i := range permissions {
+			require.True(b, t.HasAccess(permissions[i].Action, permissions[i].Scope))
+		}
+	}
+}
+
+func BenchmarkTrieHasAccess_100_100(b *testing.B) { benchTrieHasAccess(b, 100, 100) }
 
 func benchBuildTrie(b *testing.B, resourceCount, permissionPerResource int) {
 	permissions, _ := generatePermissions(b, resourceCount, permissionPerResource)
