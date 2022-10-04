@@ -3,6 +3,7 @@ import { sortBy } from 'lodash';
 import React, { useEffect, useMemo } from 'react';
 
 import { GrafanaTheme2, PanelProps } from '@grafana/data';
+import { TimeRangeUpdatedEvent } from '@grafana/runtime';
 import {
   Alert,
   BigValue,
@@ -48,13 +49,26 @@ export function UnifiedAlertList(props: PanelProps<UnifiedAlertListOptions>) {
     props.options.stateFilter.inactive = undefined; // now disable inactive
   }, [props.options.stateFilter]);
 
+  const dashboard = getDashboardSrv().getCurrent();
+
   useEffect(() => {
     dispatch(fetchAllPromRulesAction());
-    const interval = setInterval(() => dispatch(fetchAllPromRulesAction()), RULE_LIST_POLL_INTERVAL_MS);
+
+    const sub = dashboard?.events.subscribe(TimeRangeUpdatedEvent, () => dispatch(fetchAllPromRulesAction()));
+
+    //When the dashboard autorefresh is off we still want to refresh the alerts panel
+    //For this we are using the default alerting poll interval
+    const interval = setInterval(() => {
+      if (!dashboard?.refresh) {
+        dispatch(fetchAllPromRulesAction());
+      }
+    }, RULE_LIST_POLL_INTERVAL_MS);
+
     return () => {
+      sub?.unsubscribe();
       clearInterval(interval);
     };
-  }, [dispatch]);
+  }, [dispatch, dashboard]);
 
   const promRulesRequests = useUnifiedAlertingSelector((state) => state.promRules);
 
