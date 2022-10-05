@@ -193,9 +193,10 @@ type GetSignedInUserQuery struct {
 }
 
 type Permissions interface {
+	Actions() map[string]bool
+	Scopes(action, prefix string) ([]string, bool)
 	HasAccess(action, scope string) bool
 	Metadata(scope string) map[string]bool
-	Identifiers(action, prefix string) (bool, []string)
 }
 
 type SignedInUser struct {
@@ -217,7 +218,7 @@ type SignedInUser struct {
 	LastSeenAt         time.Time
 	Teams              []int64
 	// Permissions grouped by orgID and actions
-	Permissions map[int64]map[string][]string `json:"-"`
+	Permissions map[int64]Permissions
 }
 
 func (u *User) NameOrFallback() string {
