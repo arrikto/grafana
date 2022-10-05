@@ -385,14 +385,10 @@ func (ss *SQLStore) GetSignedInUser(ctx context.Context, query *models.GetSigned
 		}
 
 		// tempUser is used to retrieve the teams for the signed in user for internal use.
-		tempUser := &user.SignedInUser{
-			OrgID: usr.OrgID,
-			Permissions: map[int64]map[string][]string{
-				usr.OrgID: {
-					ac.ActionTeamsRead: {ac.ScopeTeamsAll},
-				},
-			},
-		}
+		tempUser := ac.BackgroundUser("", usr.OrgID, usr.OrgRole, []ac.Permission{
+			{Action: ac.ActionTeamsRead, Scope: ac.ScopeTeamsAll},
+		})
+
 		getTeamsByUserQuery := &models.GetTeamsByUserQuery{
 			OrgId:        usr.OrgID,
 			UserId:       usr.UserID,

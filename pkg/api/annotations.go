@@ -575,15 +575,10 @@ func AnnotationTypeScopeResolver(annotationsRepo annotations.Repository) (string
 
 		// tempUser is used to resolve annotation type.
 		// The annotation doesn't get returned to the real user, so real user's permissions don't matter here.
-		tempUser := &user.SignedInUser{
-			OrgID: orgID,
-			Permissions: map[int64]map[string][]string{
-				orgID: {
-					dashboards.ActionDashboardsRead:     {dashboards.ScopeDashboardsAll},
-					accesscontrol.ActionAnnotationsRead: {accesscontrol.ScopeAnnotationsAll},
-				},
-			},
-		}
+		tempUser := accesscontrol.BackgroundUser("", orgID, org.RoleViewer, []accesscontrol.Permission{
+			{Action: dashboards.ActionDashboardsRead, Scope: dashboards.ScopeDashboardsAll},
+			{Action: accesscontrol.ActionAnnotationsRead, Scope: accesscontrol.ScopeAnnotationsAll},
+		})
 
 		annotation, resp := findAnnotationByID(ctx, annotationsRepo, int64(annotationId), tempUser)
 		if resp != nil {

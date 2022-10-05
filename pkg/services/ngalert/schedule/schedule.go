@@ -7,6 +7,7 @@ import (
 	"net/url"
 	"time"
 
+	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	prometheusModel "github.com/prometheus/common/model"
 
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -17,7 +18,6 @@ import (
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/state"
 	"github.com/grafana/grafana/pkg/services/org"
-	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util/ticker"
 
@@ -332,19 +332,9 @@ func (sch *schedule) ruleRoutine(grafanaCtx context.Context, key ngmodels.AlertR
 		logger := logger.New("version", e.rule.Version, "attempt", attempt, "now", e.scheduledAt)
 		start := sch.clock.Now()
 
-		schedulerUser := &user.SignedInUser{
-			UserID:  -1,
-			Login:   "grafana_scheduler",
-			OrgID:   e.rule.OrgID,
-			OrgRole: org.RoleAdmin,
-			Permissions: map[int64]map[string][]string{
-				e.rule.OrgID: {
-					datasources.ActionQuery: []string{
-						datasources.ScopeAll,
-					},
-				},
-			},
-		}
+		schedulerUser := accesscontrol.BackgroundUser("grafana_scheduler", e.rule.OrgID, org.RoleAdmin, []accesscontrol.Permission{
+			{Action: datasources.ActionQuery, Scope: datasources.ScopeAll},
+		})
 
 		results := sch.evaluator.ConditionEval(ctx, schedulerUser, e.rule.GetEvalCondition(), e.scheduledAt)
 		dur := sch.clock.Now().Sub(start)
