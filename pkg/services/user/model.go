@@ -192,6 +192,12 @@ type GetSignedInUserQuery struct {
 	OrgID  int64 `xorm:"org_id"`
 }
 
+type Permissions interface {
+	HasAccess(action, scope string) bool
+	Metadata(scope string) map[string]bool
+	Identifiers(action, prefix string) (bool, []string)
+}
+
 type SignedInUser struct {
 	UserID             int64 `xorm:"user_id"`
 	OrgID              int64 `xorm:"org_id"`

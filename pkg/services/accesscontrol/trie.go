@@ -42,8 +42,8 @@ func newTrie() *Trie {
 }
 
 type Trie struct {
-	Root    *Node `json:"root"`
-	Actions map[string]bool
+	Root    *Node           `json:"root"`
+	Actions map[string]bool `json:"actions"`
 }
 
 func (t *Trie) HasAccess(action, scope string) bool {
@@ -83,7 +83,7 @@ func (t *Trie) Identifiers(action, prefix string) (bool, []string) {
 	return false, identifiers
 }
 
-func (t *Trie) Metadata(scope string) Metadata {
+func (t *Trie) Metadata(scope string) map[string]bool {
 	metadata := Metadata{}
 	t.Root.walkPath(scope, func(n *Node) bool {
 		for action := range n.Actions {

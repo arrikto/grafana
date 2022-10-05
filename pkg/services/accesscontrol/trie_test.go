@@ -26,9 +26,10 @@ func TestTree(t *testing.T) {
 
 func TestTree2(t *testing.T) {
 	permissions := []Permission{
-		{Action: "datasources:read", Scope: "datasources:uid:222"},
-		{Action: "datasources:read", Scope: "datasources:uid:123"},
-		{Action: "datasources:write", Scope: "datasources:uid:123"},
+		{Action: "datasources:explore"},
+		{Action: "datasources:read", Scope: "datasources:*"},
+		{Action: "datasources:write", Scope: "datasources:*"},
+		{Action: "datasources.permissions:write", Scope: "datasources:uid:123"},
 	}
 
 	tree := TrieFromPermissions(permissions)
