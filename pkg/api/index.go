@@ -122,12 +122,7 @@ func (hs *HTTPServer) setIndexViewData(c *models.ReqContext) (*dtos.IndexViewDat
 	}
 
 	if !hs.AccessControl.IsDisabled() {
-		userPermissions, err := hs.accesscontrolService.GetUserPermissions(c.Req.Context(), c.SignedInUser, ac.Options{ReloadCache: false})
-		if err != nil {
-			return nil, err
-		}
-
-		data.User.Permissions = ac.BuildPermissionsMap(userPermissions)
+		data.User.Permissions = c.SignedInUser.Permissions[c.OrgID].Actions()
 	}
 
 	if setting.DisableGravatar {

@@ -3,6 +3,8 @@ package accesscontrol
 import (
 	"context"
 	"strings"
+
+	"github.com/grafana/grafana/pkg/services/user"
 )
 
 // Metadata contains user accesses for a given resource
@@ -10,28 +12,12 @@ import (
 type Metadata map[string]bool
 
 // GetResourcesMetadata returns a map of accesscontrol metadata, listing for each resource, users available actions
-func GetResourcesMetadata(ctx context.Context, permissions map[string][]string, prefix string, resourceIDs map[string]bool) map[string]Metadata {
-	wildcards := WildcardsFromPrefix(prefix)
-
-	// index of the prefix in the scope
-	prefixIndex := len(prefix)
-
+func GetResourcesMetadata(ctx context.Context, permissions user.Permissions, prefix string, resourceIDs map[string]bool) map[string]Metadata {
 	// Loop through permissions once
 	result := map[string]Metadata{}
 
-	for action, scopes := range permissions {
-		for _, scope := range scopes {
-			if wildcards.Contains(scope) {
-				for id := range resourceIDs {
-					result = addActionToMetadata(result, action, id)
-				}
-				break
-			}
-			if len(scope) > prefixIndex && strings.HasPrefix(scope, prefix) && resourceIDs[scope[prefixIndex:]] {
-				// Add action to a specific resource
-				result = addActionToMetadata(result, action, scope[prefixIndex:])
-			}
-		}
+	for id := range resourceIDs {
+		result[id] = permissions.Metadata(prefix + id)
 	}
 
 	return result

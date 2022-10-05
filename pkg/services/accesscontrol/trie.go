@@ -12,7 +12,7 @@ const (
 func TrieFromPermissions(permissions []Permission) *Trie {
 	t := newTrie()
 	for _, p := range permissions {
-		t.Actions[p.Action] = true
+		t.AllActions[p.Action] = true
 		t.Root.addNode(p.Action, p.Scope, scopeDelim)
 	}
 	return t
@@ -21,7 +21,7 @@ func TrieFromPermissions(permissions []Permission) *Trie {
 func TrieFromMap(permissions map[string][]string) *Trie {
 	t := newTrie()
 	for action, scopes := range permissions {
-		t.Actions[action] = true
+		t.AllActions[action] = true
 		for _, scope := range scopes {
 			t.Root.addNode(action, scope, ":")
 		}
@@ -37,18 +37,22 @@ func newTrie() *Trie {
 			Children: map[string]Node{},
 			Actions:  map[string]bool{},
 		},
-		Actions: map[string]bool{},
+		AllActions: map[string]bool{},
 	}
 }
 
 type Trie struct {
-	Root    *Node           `json:"root"`
-	Actions map[string]bool `json:"actions"`
+	Root       *Node           `json:"root"`
+	AllActions map[string]bool `json:"actions"`
+}
+
+func (t *Trie) Actions() map[string]bool {
+	return t.AllActions
 }
 
 func (t *Trie) HasAccess(action, scope string) bool {
 	if scope == "" {
-		return t.Actions[action]
+		return t.AllActions[action]
 	}
 	var hasAccess bool
 	t.Root.walkPath(scope, func(n *Node) bool {
@@ -61,7 +65,7 @@ func (t *Trie) HasAccess(action, scope string) bool {
 	return hasAccess
 }
 
-func (t *Trie) Identifiers(action, prefix string) (bool, []string) {
+func (t *Trie) Scopes(action, prefix string) ([]string, bool) {
 	var hasWildcard bool
 	t.Root.walkPath(prefix, func(n *Node) bool {
 		if n.Actions[action] {
@@ -72,15 +76,15 @@ func (t *Trie) Identifiers(action, prefix string) (bool, []string) {
 	})
 
 	if hasWildcard {
-		return true, nil
+		return nil, true
 	}
 
-	var identifiers []string
-	t.Root.walkPrefix(prefix, func(n *Node) bool {
-		identifiers = append(identifiers, n.Path)
+	var scopes []string
+	t.Root.walkChildren(prefix, func(n *Node) bool {
+		scopes = append(scopes, prefix+n.Path)
 		return false
 	})
-	return false, identifiers
+	return scopes, false
 }
 
 func (t *Trie) Metadata(scope string) map[string]bool {
@@ -156,16 +160,16 @@ func (n *Node) walkPath(path string, walkFn func(n *Node) bool) {
 	}
 }
 
-// walkPrefix walks every node under prefix
-func (n *Node) walkPrefix(prefix string, walkFn func(n *Node) bool) {
-	path := prefix
+// walkChildren walks every node under prefix
+func (n *Node) walkChildren(parent string, walkFn func(n *Node) bool) {
+	path := parent
 	idx := strings.Index(path, ":")
 	if idx > 0 {
-		path = prefix[:idx]
+		path = parent[:idx]
 	}
 
 	if c, ok := n.Children[path]; ok {
-		c.walkPrefix(prefix[idx+1:], walkFn)
+		c.walkChildren(parent[idx+1:], walkFn)
 	}
 
 	if path == "" {

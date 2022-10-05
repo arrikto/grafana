@@ -37,5 +37,5 @@ func (api *AccessControlAPI) getUsersPermissions(c *models.ReqContext) response.
 		response.JSON(http.StatusInternalServerError, err)
 	}
 
-	return response.JSON(http.StatusOK, ac.BuildPermissionsMap(permissions))
+	return response.JSON(http.StatusOK, permissions.Actions())
 }

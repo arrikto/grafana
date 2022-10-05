@@ -44,11 +44,12 @@ func Filter(user *user.SignedInUser, sqlID, prefix string, actions ...string) (S
 	wildcards := 0
 	result := make(map[interface{}]int)
 	for _, a := range actions {
-		ids, hasWildcard := ParseScopes(prefix, user.Permissions[user.OrgID][a])
+		scopes, hasWildcard := user.Permissions[user.OrgID].Scopes(a, prefix)
 		if hasWildcard {
 			wildcards += 1
 			continue
 		}
+		ids := ParseScopes(prefix, scopes)
 		if len(ids) == 0 {
 			return denyQuery, nil
 		}
@@ -85,7 +86,7 @@ func Filter(user *user.SignedInUser, sqlID, prefix string, actions ...string) (S
 	return SQLFilter{query.String(), ids}, nil
 }
 
-func ParseScopes(prefix string, scopes []string) (ids map[interface{}]struct{}, hasWildcard bool) {
+func ParseScopes(prefix string, scopes []string) (ids map[interface{}]struct{}) {
 	ids = make(map[interface{}]struct{})
 
 	parser := parseStringAttribute
@@ -93,20 +94,14 @@ func ParseScopes(prefix string, scopes []string) (ids map[interface{}]struct{}, 
 		parser = parseIntAttribute
 	}
 
-	wildcards := WildcardsFromPrefix(prefix)
-
 	for _, scope := range scopes {
-		if wildcards.Contains(scope) {
-			return nil, true
-		}
-
 		if strings.HasPrefix(scope, prefix) {
 			if id, err := parser(scope); err == nil {
 				ids[id] = struct{}{}
 			}
 		}
 	}
-	return ids, false
+	return ids
 }
 
 func parseIntAttribute(scope string) (interface{}, error) {

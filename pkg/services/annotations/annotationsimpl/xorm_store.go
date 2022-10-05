@@ -265,13 +265,18 @@ func getAccessControlFilter(user *user.SignedInUser) (string, []interface{}, err
 	if user == nil || user.Permissions[user.OrgID] == nil {
 		return "", nil, errors.New("missing permissions")
 	}
-	scopes, has := user.Permissions[user.OrgID][ac.ActionAnnotationsRead]
-	if !has {
+
+	prefix := ac.ScopeAnnotationsProvider.GetResourceScopeType("")
+	scopes, hasWildcard := user.Permissions[user.OrgID].Scopes(ac.ActionAnnotationsRead, prefix)
+	if len(scopes) == 0 {
 		return "", nil, errors.New("missing permissions")
 	}
-	types, hasWildcardScope := ac.ParseScopes(ac.ScopeAnnotationsProvider.GetResourceScopeType(""), scopes)
-	if hasWildcardScope {
+
+	var types map[interface{}]struct{}
+	if hasWildcard {
 		types = map[interface{}]struct{}{annotations.Dashboard.String(): {}, annotations.Organization.String(): {}}
+	} else {
+		types = ac.ParseScopes(prefix, scopes)
 	}
 
 	var filters []string

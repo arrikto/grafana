@@ -52,8 +52,7 @@ func TestPermission_Evaluate(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.desc, func(t *testing.T) {
-			assert.Equal(t, test.expected, test.evaluator.Evaluate(test.permissions))
-			assert.Equal(t, test.expected, test.evaluator.Evaluate2(TrieFromMap(test.permissions)))
+			assert.Equal(t, test.expected, test.evaluator.Evaluate(TrieFromMap(test.permissions)))
 		})
 	}
 }
@@ -122,8 +121,7 @@ func TestPermission_Inject(t *testing.T) {
 		t.Run(test.desc, func(t *testing.T) {
 			injected, err := test.evaluator.MutateScopes(context.TODO(), scopeInjector(test.params))
 			assert.NoError(t, err)
-			assert.Equal(t, test.expected, injected.Evaluate(test.permissions))
-			assert.Equal(t, test.expected, injected.Evaluate2(TrieFromMap(test.permissions)))
+			assert.Equal(t, test.expected, injected.Evaluate(TrieFromMap(test.permissions)))
 		})
 	}
 }
@@ -170,8 +168,7 @@ func TestAll_Evaluate(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.desc, func(t *testing.T) {
-			assert.Equal(t, test.expected, test.evaluator.Evaluate(test.permissions))
-			assert.Equal(t, test.expected, test.evaluator.Evaluate2(TrieFromMap(test.permissions)))
+			assert.Equal(t, test.expected, test.evaluator.Evaluate(TrieFromMap(test.permissions)))
 		})
 	}
 }
@@ -233,8 +230,7 @@ func TestAll_Inject(t *testing.T) {
 		t.Run(test.desc, func(t *testing.T) {
 			injected, err := test.evaluator.MutateScopes(context.TODO(), scopeInjector(test.params))
 			assert.NoError(t, err)
-			assert.Equal(t, test.expected, injected.Evaluate(test.permissions))
-			assert.Equal(t, test.expected, injected.Evaluate2(TrieFromMap(test.permissions)))
+			assert.Equal(t, test.expected, injected.Evaluate(TrieFromMap(test.permissions)))
 		})
 	}
 }
@@ -279,8 +275,7 @@ func TestAny_Evaluate(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.desc, func(t *testing.T) {
-			assert.Equal(t, test.expected, test.evaluator.Evaluate(test.permissions))
-			assert.Equal(t, test.expected, test.evaluator.Evaluate2(TrieFromMap(test.permissions)))
+			assert.Equal(t, test.expected, test.evaluator.Evaluate(TrieFromMap(test.permissions)))
 		})
 	}
 }
@@ -342,8 +337,7 @@ func TestAny_Inject(t *testing.T) {
 		t.Run(test.desc, func(t *testing.T) {
 			injected, err := test.evaluator.MutateScopes(context.TODO(), scopeInjector(test.params))
 			assert.NoError(t, err)
-			assert.Equal(t, test.expected, injected.Evaluate(test.permissions))
-			assert.Equal(t, test.expected, injected.Evaluate2(TrieFromMap(test.permissions)))
+			assert.Equal(t, test.expected, injected.Evaluate(TrieFromMap(test.permissions)))
 		})
 	}
 }
@@ -403,8 +397,7 @@ func TestEval(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.desc, func(t *testing.T) {
-			assert.Equal(t, test.expected, test.evaluator.Evaluate(test.permissions))
-			assert.Equal(t, test.expected, test.evaluator.Evaluate2(TrieFromMap(test.permissions)))
+			assert.Equal(t, test.expected, test.evaluator.Evaluate(TrieFromMap(test.permissions)))
 		})
 	}
 }

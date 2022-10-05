@@ -79,7 +79,7 @@ var actionsToFetch = append(
 )
 
 // GetUserPermissions returns user permissions based on built-in roles
-func (s *Service) GetUserPermissions(ctx context.Context, user *user.SignedInUser, options accesscontrol.Options) ([]accesscontrol.Permission, error) {
+func (s *Service) GetUserPermissions(ctx context.Context, user *user.SignedInUser, options accesscontrol.Options) (user.Permissions, error) {
 	timer := prometheus.NewTimer(metrics.MAccessPermissionsSummary)
 	defer timer.ObserveDuration()
 
@@ -90,7 +90,7 @@ func (s *Service) GetUserPermissions(ctx context.Context, user *user.SignedInUse
 	return s.getCachedUserPermissions(ctx, user, options)
 }
 
-func (s *Service) getUserPermissions(ctx context.Context, user *user.SignedInUser, options accesscontrol.Options) ([]accesscontrol.Permission, error) {
+func (s *Service) getUserPermissions(ctx context.Context, user *user.SignedInUser, options accesscontrol.Options) (user.Permissions, error) {
 	permissions := make([]accesscontrol.Permission, 0)
 	for _, builtin := range accesscontrol.GetOrgRoles(user) {
 		if basicRole, ok := s.roles[builtin]; ok {
@@ -109,11 +109,11 @@ func (s *Service) getUserPermissions(ctx context.Context, user *user.SignedInUse
 		return nil, err
 	}
 
-	return append(permissions, dbPermissions...), nil
+	return accesscontrol.TrieFromPermissions(append(permissions, dbPermissions...)), nil
 }
 
-func (s *Service) getCachedUserPermissions(ctx context.Context, user *user.SignedInUser, options accesscontrol.Options) ([]accesscontrol.Permission, error) {
-	key, err := permissionCacheKey(user)
+func (s *Service) getCachedUserPermissions(ctx context.Context, u *user.SignedInUser, options accesscontrol.Options) (user.Permissions, error) {
+	key, err := permissionCacheKey(u)
 	if err != nil {
 		return nil, err
 	}
@@ -122,12 +122,12 @@ func (s *Service) getCachedUserPermissions(ctx context.Context, user *user.Signe
 		permissions, ok := s.cache.Get(key)
 		if ok {
 			s.log.Debug("using cached permissions", "key", key)
-			return permissions.([]accesscontrol.Permission), nil
+			return permissions.(user.Permissions), nil
 		}
 	}
 
 	s.log.Debug("fetch permissions from store", "key", key)
-	permissions, err := s.getUserPermissions(ctx, user, options)
+	permissions, err := s.getUserPermissions(ctx, u, options)
 	if err != nil {
 		return nil, err
 	}

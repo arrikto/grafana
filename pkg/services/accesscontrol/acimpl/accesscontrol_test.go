@@ -26,8 +26,8 @@ func TestAccessControl_Evaluate(t *testing.T) {
 			desc: "expect user to have access when correct permission is stored on user",
 			user: user.SignedInUser{
 				OrgID: 1,
-				Permissions: map[int64]map[string][]string{
-					1: {accesscontrol.ActionTeamsWrite: {"teams:*"}},
+				Permissions: map[int64]user.Permissions{
+					1: accesscontrol.TrieFromMap(map[string][]string{accesscontrol.ActionTeamsWrite: {"teams:*"}}),
 				},
 			},
 			evaluator: accesscontrol.EvalPermission(accesscontrol.ActionTeamsWrite, "teams:id:1"),
@@ -37,8 +37,8 @@ func TestAccessControl_Evaluate(t *testing.T) {
 			desc: "expect user to not have access without required permissions",
 			user: user.SignedInUser{
 				OrgID: 1,
-				Permissions: map[int64]map[string][]string{
-					1: {accesscontrol.ActionTeamsWrite: {"teams:*"}},
+				Permissions: map[int64]user.Permissions{
+					1: accesscontrol.TrieFromMap(map[string][]string{accesscontrol.ActionTeamsWrite: {"teams:*"}}),
 				},
 			},
 			evaluator: accesscontrol.EvalPermission(accesscontrol.ActionOrgUsersWrite, "users:id:1"),
@@ -48,8 +48,8 @@ func TestAccessControl_Evaluate(t *testing.T) {
 			desc: "expect user to have access when resolver translate scope",
 			user: user.SignedInUser{
 				OrgID: 1,
-				Permissions: map[int64]map[string][]string{
-					1: {accesscontrol.ActionTeamsWrite: {"another:scope"}},
+				Permissions: map[int64]user.Permissions{
+					1: accesscontrol.TrieFromMap(map[string][]string{accesscontrol.ActionTeamsWrite: {"another:scope"}}),
 				},
 			},
 			evaluator:      accesscontrol.EvalPermission(accesscontrol.ActionTeamsWrite, "teams:id:1"),

@@ -185,7 +185,7 @@ func (s *StandardSearchService) getUser(ctx context.Context, backendUser *backen
 	}
 
 	if usr.Permissions == nil {
-		usr.Permissions = make(map[int64]map[string][]string)
+		usr.Permissions = make(map[int64]user.Permissions)
 	}
 
 	if _, ok := usr.Permissions[orgId]; ok {
@@ -201,7 +201,7 @@ func (s *StandardSearchService) getUser(ctx context.Context, backendUser *backen
 		return nil, errors.New("auth error")
 	}
 
-	usr.Permissions[orgId] = accesscontrol.GroupScopesByAction(permissions)
+	usr.Permissions[orgId] = permissions
 	return usr, nil
 }
 

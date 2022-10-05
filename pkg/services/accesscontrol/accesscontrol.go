@@ -25,7 +25,7 @@ type AccessControl interface {
 type Service interface {
 	registry.ProvidesUsageStats
 	// GetUserPermissions returns user permissions with only action and scope fields set.
-	GetUserPermissions(ctx context.Context, user *user.SignedInUser, options Options) ([]Permission, error)
+	GetUserPermissions(ctx context.Context, user *user.SignedInUser, options Options) (user.Permissions, error)
 	// DeleteUserPermissions removes all permissions user has in org and all permission to that user
 	// If orgID is set to 0 remove permissions from all orgs
 	DeleteUserPermissions(ctx context.Context, orgID, userID int64) error
@@ -102,7 +102,7 @@ func HasGlobalAccess(ac AccessControl, service Service, c *models.ReqContext) fu
 			if err != nil {
 				c.Logger.Error("failed fetching permissions for user", "userID", userCopy.UserID, "error", err)
 			}
-			userCopy.Permissions[GlobalOrgID] = GroupScopesByAction(permissions)
+			userCopy.Permissions[GlobalOrgID] = permissions
 		}
 
 		hasAccess, err := ac.Evaluate(c.Req.Context(), &userCopy, evaluator)
@@ -223,8 +223,8 @@ func BackgroundUser(name string, orgID int64, role org.RoleType, permissions []P
 		OrgID:   orgID,
 		OrgRole: role,
 		Login:   "grafana_" + name,
-		Permissions: map[int64]map[string][]string{
-			orgID: GroupScopesByAction(permissions),
+		Permissions: map[int64]user.Permissions{
+			orgID: TrieFromPermissions(permissions),
 		},
 	}
 }

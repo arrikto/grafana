@@ -6,14 +6,14 @@ import (
 	"strings"
 
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/services/user"
 )
 
 var logger = log.New("accesscontrol.evaluator")
 
 type Evaluator interface {
 	// Evaluate permissions that are grouped by action
-	Evaluate(permissions map[string][]string) bool
-	Evaluate2(permissions *Trie) bool
+	Evaluate(permissions user.Permissions) bool
 	// MutateScopes executes a sequence of ScopeModifier functions on all embedded scopes of an evaluator and returns a new Evaluator
 	MutateScopes(ctx context.Context, mutate ScopeAttributeMutator) (Evaluator, error)
 	fmt.Stringer
@@ -32,7 +32,7 @@ type permissionEvaluator struct {
 	Scopes []string
 }
 
-func (p permissionEvaluator) Evaluate2(permissions *Trie) bool {
+func (p permissionEvaluator) Evaluate(permissions user.Permissions) bool {
 	if len(p.Scopes) == 0 {
 		return permissions.HasAccess(p.Action, "")
 	}
@@ -42,27 +42,6 @@ func (p permissionEvaluator) Evaluate2(permissions *Trie) bool {
 			return true
 		}
 	}
-	return false
-}
-
-func (p permissionEvaluator) Evaluate(permissions map[string][]string) bool {
-	userScopes, ok := permissions[p.Action]
-	if !ok {
-		return false
-	}
-
-	if len(p.Scopes) == 0 {
-		return true
-	}
-
-	for _, target := range p.Scopes {
-		for _, scope := range userScopes {
-			if match(scope, target) {
-				return true
-			}
-		}
-	}
-
 	return false
 }
 
@@ -127,16 +106,7 @@ type allEvaluator struct {
 	allOf []Evaluator
 }
 
-func (a allEvaluator) Evaluate2(permissions *Trie) bool {
-	for _, e := range a.allOf {
-		if !e.Evaluate2(permissions) {
-			return false
-		}
-	}
-	return true
-}
-
-func (a allEvaluator) Evaluate(permissions map[string][]string) bool {
+func (a allEvaluator) Evaluate(permissions user.Permissions) bool {
 	for _, e := range a.allOf {
 		if !e.Evaluate(permissions) {
 			return false
@@ -186,16 +156,7 @@ type anyEvaluator struct {
 	anyOf []Evaluator
 }
 
-func (a anyEvaluator) Evaluate2(permissions *Trie) bool {
-	for _, e := range a.anyOf {
-		if e.Evaluate2(permissions) {
-			return true
-		}
-	}
-	return false
-}
-
-func (a anyEvaluator) Evaluate(permissions map[string][]string) bool {
+func (a anyEvaluator) Evaluate(permissions user.Permissions) bool {
 	for _, e := range a.anyOf {
 		if e.Evaluate(permissions) {
 			return true
